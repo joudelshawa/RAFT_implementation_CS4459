@@ -1,0 +1,67 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+package raft;
+
+// service definition for RAFT protocol
+
+message VoteRequest {
+    int32 term = 1; // candidate's term
+    int32 id = 2; // candidate's id
+    int32 lastLogIndex = 3; // last log index of candidate to check if logs are up to date
+    int32 lastLogTerm = 4; // last log term of candidate to check if logs are up to date
+}
+
+message AppendEntriesRequest {
+    int32 term = 1; // leader’s term
+    int32 leaderId = 2; // so follower can redirect clients
+    int32 prevLogIndex = 3; // index of log entry before new one to check if valid
+    int32 prevLogTerm = 4; // term of previous log entry
+    int32 leaderCommit = 5; // leader’s commitIndex 
+}
+
+message VoteResponse {
+    int32 term = 1; // so candidate can check if their term is stale
+    bool voteGiven = 2; // true if follower contained entry matching prevLogIndex and prevLogTerm
+}
+
+message AppendEntriesResponse {
+    int32 term = 1;
+    bool success = 2; // true if follower contained entry matching prevLogIndex and prevLogTerm
+}
+
+service RAFTService {
+    rpc RequestVote(VoteRequest) returns (VoteResponse);
+    rpc AppendEntries(AppendEntriesRequest) returns (AppendEntriesResponse);
+}
+  
+// service definition for writing in general (from asn 2)
+
+message WriteRequest {
+    string key = 1;
+    string value = 2;
+}
+
+message WriteResponse {
+    string ack = 1;
+}
+
+service Sequence {
+    rpc Write (WriteRequest) returns (WriteResponse);
+}
+
+// service definition for sending heartbeats (from asn 2)
+
+message HeartbeatRequest {
+    string service_identifier = 1;
+}
+
+message HeartbeatResponse {
+    string message = 1;
+}
+
+service ViewService {
+    rpc Heartbeat(HeartbeatRequest) returns (google.protobuf.Empty);
+}
+  
