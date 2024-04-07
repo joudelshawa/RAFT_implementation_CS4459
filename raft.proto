@@ -21,6 +21,14 @@ message AppendEntriesRequest {
     int32 leaderCommit = 5; // leader’s commitIndex 
 }
 
+message ReconcileRequest {
+    string filepath = 1; // file path of leader's logs to compare
+}
+
+message ReconcileResponse {
+    bool success = 1; // true if follower synced files
+}
+
 message VoteResponse {
     int32 term = 1; // so candidate can check if their term is stale
     bool voteGiven = 2; // true if follower contained entry matching prevLogIndex and prevLogTerm
@@ -34,6 +42,7 @@ message AppendEntriesResponse {
 service RAFTService {
     rpc RequestVote(VoteRequest) returns (VoteResponse);
     rpc AppendEntries(AppendEntriesRequest) returns (AppendEntriesResponse);
+    rpc ReconcileLogs(ReconcileRequest) returns (ReconcileResponse);
 }
   
 // service definition for writing in general (from asn 2)
@@ -61,7 +70,7 @@ message HeartbeatResponse {
     string message = 1;
 }
 
-service ViewService {
+service ViewServicer {
     rpc Heartbeat(HeartbeatRequest) returns (google.protobuf.Empty);
 }
   
