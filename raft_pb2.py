@@ -15,7 +15,7 @@ _sym_db = _symbol_database.Default()
 from google.protobuf import empty_pb2 as google_dot_protobuf_dot_empty__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\nraft.proto\x12\x04raft\x1a\x1bgoogle/protobuf/empty.proto\"R\n\x0bVoteRequest\x12\x0c\n\x04term\x18\x01 \x01(\x05\x12\n\n\x02id\x18\x02 \x01(\x05\x12\x14\n\x0clastLogIndex\x18\x03 \x01(\x05\x12\x13\n\x0blastLogTerm\x18\x04 \x01(\x05\"w\n\x14\x41ppendEntriesRequest\x12\x0c\n\x04term\x18\x01 \x01(\x05\x12\x10\n\x08leaderId\x18\x02 \x01(\x05\x12\x14\n\x0cprevLogIndex\x18\x03 \x01(\x05\x12\x13\n\x0bprevLogTerm\x18\x04 \x01(\x05\x12\x14\n\x0cleaderCommit\x18\x05 \x01(\x05\"$\n\x10ReconcileRequest\x12\x10\n\x08\x66ilepath\x18\x01 \x01(\t\"$\n\x11ReconcileResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\"/\n\x0cVoteResponse\x12\x0c\n\x04term\x18\x01 \x01(\x05\x12\x11\n\tvoteGiven\x18\x02 \x01(\x08\"6\n\x15\x41ppendEntriesResponse\x12\x0c\n\x04term\x18\x01 \x01(\x05\x12\x0f\n\x07success\x18\x02 \x01(\x08\"*\n\x0cWriteRequest\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t\"\x1c\n\rWriteResponse\x12\x0b\n\x03\x61\x63k\x18\x01 \x01(\t\".\n\x10HeartbeatRequest\x12\x1a\n\x12service_identifier\x18\x01 \x01(\t\"$\n\x11HeartbeatResponse\x12\x0f\n\x07message\x18\x01 \x01(\t2\xcf\x01\n\x0bRAFTService\x12\x34\n\x0bRequestVote\x12\x11.raft.VoteRequest\x1a\x12.raft.VoteResponse\x12H\n\rAppendEntries\x12\x1a.raft.AppendEntriesRequest\x1a\x1b.raft.AppendEntriesResponse\x12@\n\rReconcileLogs\x12\x16.raft.ReconcileRequest\x1a\x17.raft.ReconcileResponse2<\n\x08Sequence\x12\x30\n\x05Write\x12\x12.raft.WriteRequest\x1a\x13.raft.WriteResponse2K\n\x0cViewServicer\x12;\n\tHeartbeat\x12\x16.raft.HeartbeatRequest\x1a\x16.google.protobuf.Emptyb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\nraft.proto\x12\x04raft\x1a\x1bgoogle/protobuf/empty.proto\"R\n\x0bVoteRequest\x12\x0c\n\x04term\x18\x01 \x01(\x05\x12\n\n\x02id\x18\x02 \x01(\t\x12\x14\n\x0clastLogIndex\x18\x03 \x01(\x05\x12\x13\n\x0blastLogTerm\x18\x04 \x01(\x05\"w\n\x14\x41ppendEntriesRequest\x12\x0c\n\x04term\x18\x01 \x01(\x05\x12\x10\n\x08leaderId\x18\x02 \x01(\t\x12\x14\n\x0cprevLogIndex\x18\x03 \x01(\x05\x12\x13\n\x0bprevLogTerm\x18\x04 \x01(\x05\x12\x14\n\x0cleaderCommit\x18\x05 \x01(\x05\"o\n\x10ReconcileRequest\x12\x0c\n\x04term\x18\x01 \x01(\x05\x12\x10\n\x08leaderId\x18\x02 \x01(\t\x12\x14\n\x0cprevLogIndex\x18\x03 \x01(\x05\x12\x13\n\x0bprevLogTerm\x18\x04 \x01(\x05\x12\x10\n\x08\x66ilepath\x18\x05 \x01(\t\"$\n\x11ReconcileResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\"/\n\x0cVoteResponse\x12\x0c\n\x04term\x18\x01 \x01(\x05\x12\x11\n\tvoteGiven\x18\x02 \x01(\x08\"6\n\x15\x41ppendEntriesResponse\x12\x0c\n\x04term\x18\x01 \x01(\x05\x12\x0f\n\x07success\x18\x02 \x01(\x08\"\x1d\n\nTMPRequest\x12\x0f\n\x07message\x18\x01 \x01(\t\"*\n\x0cWriteRequest\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t\"\x1c\n\rWriteResponse\x12\x0b\n\x03\x61\x63k\x18\x01 \x01(\t\".\n\x10HeartbeatRequest\x12\x1a\n\x12service_identifier\x18\x01 \x01(\t\"$\n\x11HeartbeatResponse\x12\x0f\n\x07message\x18\x01 \x01(\t2\xef\x02\n\x0bRAFTService\x12\x34\n\x0bRequestVote\x12\x11.raft.VoteRequest\x1a\x12.raft.VoteResponse\x12H\n\rAppendEntries\x12\x1a.raft.AppendEntriesRequest\x1a\x1b.raft.AppendEntriesResponse\x12@\n\rReconcileLogs\x12\x16.raft.ReconcileRequest\x1a\x17.raft.ReconcileResponse\x12;\n\tHeartbeat\x12\x16.raft.HeartbeatRequest\x1a\x16.google.protobuf.Empty\x12\x30\n\x05Write\x12\x12.raft.WriteRequest\x1a\x13.raft.WriteResponse\x12/\n\x03TMP\x12\x10.raft.TMPRequest\x1a\x16.google.protobuf.Emptyb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -27,25 +27,23 @@ if _descriptor._USE_C_DESCRIPTORS == False:
   _globals['_APPENDENTRIESREQUEST']._serialized_start=133
   _globals['_APPENDENTRIESREQUEST']._serialized_end=252
   _globals['_RECONCILEREQUEST']._serialized_start=254
-  _globals['_RECONCILEREQUEST']._serialized_end=290
-  _globals['_RECONCILERESPONSE']._serialized_start=292
-  _globals['_RECONCILERESPONSE']._serialized_end=328
-  _globals['_VOTERESPONSE']._serialized_start=330
-  _globals['_VOTERESPONSE']._serialized_end=377
-  _globals['_APPENDENTRIESRESPONSE']._serialized_start=379
-  _globals['_APPENDENTRIESRESPONSE']._serialized_end=433
-  _globals['_WRITEREQUEST']._serialized_start=435
-  _globals['_WRITEREQUEST']._serialized_end=477
-  _globals['_WRITERESPONSE']._serialized_start=479
-  _globals['_WRITERESPONSE']._serialized_end=507
-  _globals['_HEARTBEATREQUEST']._serialized_start=509
-  _globals['_HEARTBEATREQUEST']._serialized_end=555
-  _globals['_HEARTBEATRESPONSE']._serialized_start=557
-  _globals['_HEARTBEATRESPONSE']._serialized_end=593
-  _globals['_RAFTSERVICE']._serialized_start=596
-  _globals['_RAFTSERVICE']._serialized_end=803
-  _globals['_SEQUENCE']._serialized_start=805
-  _globals['_SEQUENCE']._serialized_end=865
-  _globals['_VIEWSERVICER']._serialized_start=867
-  _globals['_VIEWSERVICER']._serialized_end=942
+  _globals['_RECONCILEREQUEST']._serialized_end=365
+  _globals['_RECONCILERESPONSE']._serialized_start=367
+  _globals['_RECONCILERESPONSE']._serialized_end=403
+  _globals['_VOTERESPONSE']._serialized_start=405
+  _globals['_VOTERESPONSE']._serialized_end=452
+  _globals['_APPENDENTRIESRESPONSE']._serialized_start=454
+  _globals['_APPENDENTRIESRESPONSE']._serialized_end=508
+  _globals['_TMPREQUEST']._serialized_start=510
+  _globals['_TMPREQUEST']._serialized_end=539
+  _globals['_WRITEREQUEST']._serialized_start=541
+  _globals['_WRITEREQUEST']._serialized_end=583
+  _globals['_WRITERESPONSE']._serialized_start=585
+  _globals['_WRITERESPONSE']._serialized_end=613
+  _globals['_HEARTBEATREQUEST']._serialized_start=615
+  _globals['_HEARTBEATREQUEST']._serialized_end=661
+  _globals['_HEARTBEATRESPONSE']._serialized_start=663
+  _globals['_HEARTBEATRESPONSE']._serialized_end=699
+  _globals['_RAFTSERVICE']._serialized_start=702
+  _globals['_RAFTSERVICE']._serialized_end=1069
 # @@protoc_insertion_point(module_scope)

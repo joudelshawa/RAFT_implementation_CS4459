@@ -8,21 +8,25 @@ package raft;
 
 message VoteRequest {
     int32 term = 1; // candidate's term
-    int32 id = 2; // candidate's id
+    string id = 2; // candidate's id
     int32 lastLogIndex = 3; // last log index of candidate to check if logs are up to date
     int32 lastLogTerm = 4; // last log term of candidate to check if logs are up to date
 }
 
 message AppendEntriesRequest {
     int32 term = 1; // leader’s term
-    int32 leaderId = 2; // so follower can redirect clients
+    string leaderId = 2; // for secondaries to keep track of id for heartbeats
     int32 prevLogIndex = 3; // index of log entry before new one to check if valid
     int32 prevLogTerm = 4; // term of previous log entry
     int32 leaderCommit = 5; // leader’s commitIndex 
 }
 
 message ReconcileRequest {
-    string filepath = 1; // file path of leader's logs to compare
+    int32 term = 1; // leader’s term
+    string leaderId = 2; // for secondaries to keep track of id for heartbeats
+    int32 prevLogIndex = 3; // index of log entry before new one to check if valid
+    int32 prevLogTerm = 4; // term of previous log entry
+    string filepath = 5; // file path of leader's logs to compare
 }
 
 message ReconcileResponse {
@@ -43,9 +47,18 @@ service RAFTService {
     rpc RequestVote(VoteRequest) returns (VoteResponse);
     rpc AppendEntries(AppendEntriesRequest) returns (AppendEntriesResponse);
     rpc ReconcileLogs(ReconcileRequest) returns (ReconcileResponse);
+    rpc Heartbeat(HeartbeatRequest) returns (google.protobuf.Empty);
+    rpc Write (WriteRequest) returns (WriteResponse);
+    rpc TMP(TMPRequest) returns (google.protobuf.Empty);
 }
   
 // service definition for writing in general (from asn 2)
+
+
+message TMPRequest {
+    string message = 1;
+}
+
 
 message WriteRequest {
     string key = 1;
@@ -56,9 +69,9 @@ message WriteResponse {
     string ack = 1;
 }
 
-service Sequence {
-    rpc Write (WriteRequest) returns (WriteResponse);
-}
+// service Sequence {
+//     rpc Write (WriteRequest) returns (WriteResponse);
+// }
 
 // service definition for sending heartbeats (from asn 2)
 
@@ -70,7 +83,7 @@ message HeartbeatResponse {
     string message = 1;
 }
 
-service ViewServicer {
-    rpc Heartbeat(HeartbeatRequest) returns (google.protobuf.Empty);
-}
+// service ViewService {
+    
+// }
   

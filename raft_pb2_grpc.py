@@ -30,6 +30,21 @@ class RAFTServiceStub(object):
                 request_serializer=raft__pb2.ReconcileRequest.SerializeToString,
                 response_deserializer=raft__pb2.ReconcileResponse.FromString,
                 )
+        self.Heartbeat = channel.unary_unary(
+                '/raft.RAFTService/Heartbeat',
+                request_serializer=raft__pb2.HeartbeatRequest.SerializeToString,
+                response_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
+                )
+        self.Write = channel.unary_unary(
+                '/raft.RAFTService/Write',
+                request_serializer=raft__pb2.WriteRequest.SerializeToString,
+                response_deserializer=raft__pb2.WriteResponse.FromString,
+                )
+        self.TMP = channel.unary_unary(
+                '/raft.RAFTService/TMP',
+                request_serializer=raft__pb2.TMPRequest.SerializeToString,
+                response_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
+                )
 
 
 class RAFTServiceServicer(object):
@@ -53,6 +68,24 @@ class RAFTServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def Heartbeat(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def Write(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def TMP(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_RAFTServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -70,6 +103,21 @@ def add_RAFTServiceServicer_to_server(servicer, server):
                     servicer.ReconcileLogs,
                     request_deserializer=raft__pb2.ReconcileRequest.FromString,
                     response_serializer=raft__pb2.ReconcileResponse.SerializeToString,
+            ),
+            'Heartbeat': grpc.unary_unary_rpc_method_handler(
+                    servicer.Heartbeat,
+                    request_deserializer=raft__pb2.HeartbeatRequest.FromString,
+                    response_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
+            ),
+            'Write': grpc.unary_unary_rpc_method_handler(
+                    servicer.Write,
+                    request_deserializer=raft__pb2.WriteRequest.FromString,
+                    response_serializer=raft__pb2.WriteResponse.SerializeToString,
+            ),
+            'TMP': grpc.unary_unary_rpc_method_handler(
+                    servicer.TMP,
+                    request_deserializer=raft__pb2.TMPRequest.FromString,
+                    response_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -132,49 +180,22 @@ class RAFTService(object):
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
-
-class SequenceStub(object):
-    """Missing associated documentation comment in .proto file."""
-
-    def __init__(self, channel):
-        """Constructor.
-
-        Args:
-            channel: A grpc.Channel.
-        """
-        self.Write = channel.unary_unary(
-                '/raft.Sequence/Write',
-                request_serializer=raft__pb2.WriteRequest.SerializeToString,
-                response_deserializer=raft__pb2.WriteResponse.FromString,
-                )
-
-
-class SequenceServicer(object):
-    """Missing associated documentation comment in .proto file."""
-
-    def Write(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-
-def add_SequenceServicer_to_server(servicer, server):
-    rpc_method_handlers = {
-            'Write': grpc.unary_unary_rpc_method_handler(
-                    servicer.Write,
-                    request_deserializer=raft__pb2.WriteRequest.FromString,
-                    response_serializer=raft__pb2.WriteResponse.SerializeToString,
-            ),
-    }
-    generic_handler = grpc.method_handlers_generic_handler(
-            'raft.Sequence', rpc_method_handlers)
-    server.add_generic_rpc_handlers((generic_handler,))
-
-
- # This class is part of an EXPERIMENTAL API.
-class Sequence(object):
-    """Missing associated documentation comment in .proto file."""
+    @staticmethod
+    def Heartbeat(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/raft.RAFTService/Heartbeat',
+            raft__pb2.HeartbeatRequest.SerializeToString,
+            google_dot_protobuf_dot_empty__pb2.Empty.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
     def Write(request,
@@ -187,58 +208,14 @@ class Sequence(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/raft.Sequence/Write',
+        return grpc.experimental.unary_unary(request, target, '/raft.RAFTService/Write',
             raft__pb2.WriteRequest.SerializeToString,
             raft__pb2.WriteResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
-
-class ViewServicerStub(object):
-    """Missing associated documentation comment in .proto file."""
-
-    def __init__(self, channel):
-        """Constructor.
-
-        Args:
-            channel: A grpc.Channel.
-        """
-        self.Heartbeat = channel.unary_unary(
-                '/raft.ViewServicer/Heartbeat',
-                request_serializer=raft__pb2.HeartbeatRequest.SerializeToString,
-                response_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
-                )
-
-
-class ViewServicerServicer(object):
-    """Missing associated documentation comment in .proto file."""
-
-    def Heartbeat(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-
-def add_ViewServicerServicer_to_server(servicer, server):
-    rpc_method_handlers = {
-            'Heartbeat': grpc.unary_unary_rpc_method_handler(
-                    servicer.Heartbeat,
-                    request_deserializer=raft__pb2.HeartbeatRequest.FromString,
-                    response_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
-            ),
-    }
-    generic_handler = grpc.method_handlers_generic_handler(
-            'raft.ViewServicer', rpc_method_handlers)
-    server.add_generic_rpc_handlers((generic_handler,))
-
-
- # This class is part of an EXPERIMENTAL API.
-class ViewServicer(object):
-    """Missing associated documentation comment in .proto file."""
-
     @staticmethod
-    def Heartbeat(request,
+    def TMP(request,
             target,
             options=(),
             channel_credentials=None,
@@ -248,8 +225,8 @@ class ViewServicer(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/raft.ViewServicer/Heartbeat',
-            raft__pb2.HeartbeatRequest.SerializeToString,
+        return grpc.experimental.unary_unary(request, target, '/raft.RAFTService/TMP',
+            raft__pb2.TMPRequest.SerializeToString,
             google_dot_protobuf_dot_empty__pb2.Empty.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
