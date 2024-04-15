@@ -97,19 +97,20 @@ class RAFTServiceServicer(raft_pb2_grpc.RAFTServiceServicer):
         if self.shutdown_event.is_set():
             return
         success = []
-        self.output(f"isprimary {self.isPrimary}")
         if self.isPrimary: # if primary, tell create appendentries RPC
             if ((len(self.channels)+1) < 3): # if we dont have 3 or more servers, dont try to append anything
                 return raft_pb2.WriteResponse(ack=f"not enough servers active. currently have {(len(self.channels)+1)} and need at least 3")
             
-            self.output(f"primary is sending append entries request! to {self.channels.keys()}")
+            self.output(f"primary, sending append entries request! to {self.channels.keys()}")
             for name, channel in list(self.channels.items()): # connect to other servers
                 # create stub with current channel so we can send appendentry rpc to server
                 stub = raft_pb2_grpc.RAFTServiceStub(channel)
                 try:
                     # send the appendentries request
                     response = stub.AppendEntries(raft_pb2.AppendEntriesRequest(term=self.term, leaderId=self.id, prevLogIndex=self.lastIndex, prevLogTerm = self.lastIndexTerm, leaderCommit=self.lastIndex+1, keyInput = request.key, valueInput = request.value))
-                    if response.success: success.append(1)
+                    if response.success: 
+                        success.append(1)
+                        self.output(f"appended entries for {name}")
                     else: # if its not successful, we need to reconcile entries
                         # try reconcile logs req
                         try:
@@ -117,12 +118,14 @@ class RAFTServiceServicer(raft_pb2_grpc.RAFTServiceServicer):
                             if response.success: self.output(f"reconciled entries for {name}!")
                             # send the appendentries request again for the new data
                             response = stub.AppendEntries(raft_pb2.AppendEntriesRequest(term=self.term, leaderId=self.id, prevLogIndex=self.lastIndex, prevLogTerm = self.lastIndexTerm, leaderCommit=(self.lastIndex+1), keyInput = request.key, valueInput = request.value))
-                            if response.success: success.append(1)
+                            if response.success: 
+                                success.append(1)
+                                self.output(f"appended entries for {name}")
                             else: self.output("something went wrong while appending after reconciliation.")
                         except Exception as e:
-                            self.output(f"Failed to send reconcilelogs to {name}.")
+                            self.output(f"failed to send reconcilelogs to {name}.")
                 except Exception as e:
-                    self.output(f"Failed to send appendentries to {name}.")
+                    self.output(f"failed to send appendentries to {name}.")
 
         self.output(f"sum: {sum(success)}")
         if sum(success)+1 > (len(self.channels)+1)/2: # if more than majority confirmed appendentries, actually append it
@@ -202,17 +205,14 @@ class RAFTServiceServicer(raft_pb2_grpc.RAFTServiceServicer):
         
     # function to reconcile logs - called by primary
     def ReconcileLogs(self, request, context):
-        if not self.shutdown_event.is_set():
+        if not self.shutdown_event.is_set(): # only do if server shutdown hasnt been activated
             path = request.filepath
-
             try:
                 with open(path, 'r') as file1, open(self.log_file_path, 'r') as file2:
                     
                     # read all lines from each log file
                     leader_lines = file1.readlines()
                     follower_lines = file2.readlines()
-
-                    changed = False # bool to track if we need to change follower file
 
                     # reverse lists to start comparison from end of log
                     reversed1 = follower_lines[::-1]
@@ -240,7 +240,7 @@ class RAFTServiceServicer(raft_pb2_grpc.RAFTServiceServicer):
                             if append_from < len(leader_lines):
                                 file.writelines(leader_lines[append_from:])
 
-                    # update the servers last logs so we can append entries
+                    # update the servers last logs so we can append entries in the future
                     self.lastIndex = request.prevLogIndex
                     self.lastIndexTerm = request.prevLogTerm
                     self.term = request.term
@@ -272,7 +272,7 @@ class RAFTServiceServicer(raft_pb2_grpc.RAFTServiceServicer):
     # function to send hearbeat to list of servers every 5 seconds
     def send_heartbeat(self):  
         while not self.shutdown_event.is_set(): # do constantly until shutdown
-            self.output("------------------------------------------------")
+            
             for name, channel in list(self.channels.items()): # connect to other servers
                 if self.shutdown_event.is_set(): # if already shut down, dont do anything!
                     break # leave loop
@@ -281,6 +281,7 @@ class RAFTServiceServicer(raft_pb2_grpc.RAFTServiceServicer):
                     # send the heartbeat
                     stub.Heartbeat(raft_pb2.HeartbeatRequest(service_identifier=self.id))
                 except:
+                    self.output("------------------------------------------------")
                     self.output(f"Failed to send heartbeat to {name}.")
 
             # wait 20 sec between heartbeats
@@ -339,7 +340,9 @@ class RAFTServiceServicer(raft_pb2_grpc.RAFTServiceServicer):
                     # send the vote request
                     self.output(f"sending vote request to {name}!")
                     response = stub.RequestVote(raft_pb2.VoteRequest(term=self.term, id=self.id, lastLogIndex=self.lastIndex, lastLogTerm = self.lastIndexTerm))
-                    if response.voteGiven: votes.append(1) # if they voted append it to our list
+                    if response.voteGiven: 
+                        self.output(f"vote was received from {name}")
+                        votes.append(1) # if they voted append it to our list
                     elif response.term > self.term:  # if the response term is greater than our term, we have stale data and cant be the leader
                         self.isCandidate = False # you cant be a candidate anymore
                 except Exception as e:
