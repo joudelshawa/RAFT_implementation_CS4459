@@ -20,25 +20,9 @@
 <script src="{{url_for('static', filename='javascript/toggle-server-manager.js') }}"></script>
 <script src="{{url_for('static', filename='javascript/radio-group-handler.js') }}"></script>
 <script src="{{url_for('static', filename='javascript/input-field-handler.js') }}"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const toggle = document.getElementById('toggle-server-manager');
-        const inputField = document.getElementById('inputField');
-
-        toggle.addEventListener('change', function () {
-            const status = toggle.checked ? 'on' : 'off';
-            axios.post('/toggle-server-manager', {status: status})
-                .then(response => {
-                    console.log(response.data.message);
-                    inputField.disabled = !toggle.checked;
-                })
-                .catch(error => console.error('Error:', error));
-        });
-    });
-</script>
-
-
-{% include 'modal.html' %}
+<script src="{{url_for('static', filename='javascript/show-terminal-output.js') }}"></script>
+{% include 'manager-toggle-modal.html' %}
+{% include 'terminal-output-modal.html' %}
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
         crossorigin="anonymous"></script>

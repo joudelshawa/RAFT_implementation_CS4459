@@ -1,5 +1,6 @@
 import subprocess
 from flask import Flask, render_template, request, jsonify
+import threading
 
 app = Flask(__name__, template_folder='templates')
 output = []
@@ -17,6 +18,15 @@ def load_server_content():
     return jsonify(html=content)
 
 
+def read_output(proc, out):
+    """Read process output and append to the output list."""
+    try:
+        for line in iter(proc.stdout.readline, ''):
+            out.append(line)
+    finally:
+        proc.stdout.close()
+
+
 @app.route('/toggle-server-manager', methods=['POST'])
 def toggle_server():
     global process, output
@@ -24,10 +34,11 @@ def toggle_server():
     if data['status'] == 'on':
         if process is None:  # Start the process if not already started
             process = subprocess.Popen(['python', '../server_manager.py'], stdin=subprocess.PIPE,
-                                       stdout=subprocess.PIPE, text=True, bufsize=1)
+                                       stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
             output = []  # Reset output when starting a new process
-            for line in iter(process.stdout.readline, ''):
-                output.append(line)
+
+            # Create a thread to read the output of the process
+            threading.Thread(target=read_output, args=(process, output), daemon=True).start()
         return jsonify({'message': 'Server Manager started'})
     elif data['status'] == 'off':
         if process:

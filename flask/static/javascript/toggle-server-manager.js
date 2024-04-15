@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const serverStatus = document.getElementById('server-status');
     const inputField = document.getElementById('inputField');
     const addServer = document.getElementById('add-server');
+    const showOutputBtn = document.getElementById('show-output');
     let lastCheckedState = toggle.checked;
 
     function updateUI(isOn) {
@@ -11,7 +12,8 @@ document.addEventListener('DOMContentLoaded', function () {
         serverStatus.className = isOn ? 'text-success' : 'text-danger';
         inputField.disabled = !isOn;
         addServer.disabled = !isOn;
-        toggle.checked = isOn;  // Ensure the toggle's checked state matches the server state
+        toggle.checked = isOn;
+        showOutputBtn.style.display = isOn ? 'block' : 'none';
     }
 
     updateUI(toggle.checked);
