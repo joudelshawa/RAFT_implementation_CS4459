@@ -1,6 +1,7 @@
 import subprocess
 from flask import Flask, render_template, request, jsonify
 import threading
+import os
 
 app = Flask(__name__, template_folder='templates')
 output = []
@@ -12,10 +13,47 @@ def home():
     return render_template('home.html')
 
 
-@app.route('/load-server-content')
-def load_server_content():
-    content = render_template('server.html')
-    return jsonify(html=content)
+def log_files_exist(server_id):
+    base_path = '../'
+    filenames = [f"log_Server {server_id}.txt", f"heartbeat_Server {server_id}.txt", f"output_Server {server_id}.txt"]
+    return all(os.path.exists(os.path.join(base_path, filename)) for filename in filenames)
+
+
+@app.route('/check-logs', methods=['POST'])
+def check_logs():
+    server_id = request.json['server_id']
+    if log_files_exist(server_id):
+        return jsonify({'status': 'Connected'})
+    return jsonify({'status': 'Connecting...'})
+
+
+@app.route('/get-log', methods=['POST'])
+def get_log():
+    server_id = request.json['server_id']
+    log_type = request.json['log_type']  # "log", "heartbeat", or "output"
+    filename = f"{log_type}_Server {server_id}.txt"
+    base_path = '/path/to/logs/'
+    try:
+        with open(os.path.join(base_path, filename), 'r') as file:
+            content = file.read()
+        return jsonify({'content': content})
+    except FileNotFoundError:
+        return jsonify({'error': 'File not found'}), 404
+
+
+@app.route('/start-server', methods=['POST'])
+def start_server():
+    global process
+    server_id = request.json.get('server_id')
+    if process and process.poll() is None:
+        try:
+            command = f'start server {server_id}'
+            process.stdin.write(command + '\n')
+            process.stdin.flush()
+            return jsonify({'message': f'Command "{command}" sent to server manager'}), 200
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+    return jsonify({'error': 'Server manager is not running'}), 400
 
 
 def read_output(proc, out):

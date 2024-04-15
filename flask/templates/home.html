@@ -4,23 +4,26 @@
 {% block content %}
 <main>
     <div class="container my-5">
-        <div class="row p-4 pb-0 pe-lg-0 align-items-center rounded-3 border shadow-lg">
+        <div class="row p-4 align-items-center rounded-3 border shadow-lg">
             <section class="py-5 text-center container">
                 <div class="row py-lg-3">
                     <div class="col-lg-6 col-md-8 mx-auto">
                         <h1 class="fw-light">Server Management Dashboard</h1>
                         <p class="lead text-body-secondary">Create, test, and manage server instances.</p>
                         <div class="input-group mb-3 mt-5">
-                            <span class="input-group-text" id="inputGroup-sizing-default">Input</span>
+                            <span class="input-group-text" id="inputGroup-sizing-default">input</span>
                             <input type="text" class="form-control" id="inputField" aria-label="Sizing example input"
                                    aria-describedby="inputGroup-sizing-default" disabled>
                         </div>
                     </div>
                 </div>
                 <div class="d-grid gap-4 d-md-flex justify-content-center mb-4 mt-4 mb-lg-3">
-                    <button type="button" class="btn btn-outline-primary btn-lg px-4" id="add-server">Add Server
+                    <button type="button" class="btn btn-outline-primary btn-lg px-4" id="add-server"
+                            style="min-width:200px;">Add Server
                     </button>
-                    <button type="button" class="btn btn-outline-success btn-lg px-4" id="show-output" style="display:none;">Show Terminal</button>
+                    <button type="button" class="btn btn-outline-success btn-lg px-4" id="show-output"
+                            style="min-width:200px; display:none;">Show Terminal
+                    </button>
                 </div>
             </section>
         </div>
@@ -32,51 +35,8 @@
                 <p class="lead text-body-secondary">To add servers to the dashboard, ensure the manager
                     process is running and click the "Add Server" button.</p>
             </div>
-            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3" id="content-area">
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3" id="servers-container">
                 <!-- Server instances will be added here -->
-
-                <!-- templates/server.html -->
-                <div class="col">
-                    <div class="card shadow-sm">
-                        <div class="card-body">
-                            <h2 class="text-center">Server Title</h2>
-                            <div class="d-flex flex-column flex-md-row gap-4 py-md-3 align-items-center justify-content-center">
-                                <div class="list-group list-group-radio d-grid gap-2 border-0">
-                                    <div class="position-relative">
-                                        <input class="form-check-input position-absolute top-50 end-0 me-3 fs-5" type="radio" name="listGroupRadioGrid" id="listGroupRadioGrid1" value="" onclick="toggleRadio(this)" checked>
-                                        <label class="list-group-item rounded-3" for="listGroupRadioGrid1">
-                                            <strong class="fw-semibold">Server Logs</strong>
-                                            <span class="d-block small opacity-75">View the appends this server has made.</span>
-                                        </label>
-                                    </div>
-                                    <div class="position-relative">
-                                        <input class="form-check-input position-absolute top-50 end-0 me-3 fs-5" type="radio" name="listGroupRadioGrid" id="listGroupRadioGrid2" value="" onclick="toggleRadio(this)">
-                                        <label class="list-group-item rounded-3" for="listGroupRadioGrid2">
-                                            <strong class="fw-semibold">Heartbeat Log</strong>
-                                            <span class="d-block small opacity-75">Heartbeat interactions with other servers.</span>
-                                        </label>
-                                    </div>
-                                    <div class="position-relative">
-                                        <input class="form-check-input position-absolute top-50 end-0 me-3 fs-5" type="radio" name="listGroupRadioGrid" id="listGroupRadioGrid3" value="" onclick="toggleRadio(this)">
-                                        <label class="list-group-item rounded-3" for="listGroupRadioGrid3">
-                                            <strong class="fw-semibold">Output Log</strong>
-                                            <span class="d-block small opacity-75">All other output logging from this server.</span>
-                                        </label>
-                                    </div>
-                                    <label for="server-log"></label>
-                                    <textarea class="form-control" id="server-log" rows="10"></textarea>
-                                </div>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="btn-group">
-                                    <button type="button" class="btn btn-sm btn-danger">Kill Server</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-
             </div>
         </div>
     </div>
