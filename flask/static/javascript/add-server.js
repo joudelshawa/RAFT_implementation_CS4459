@@ -42,24 +42,29 @@ function addServer() {
             <div class="card-body text-center">
                 <h2 class="text-center">Server ${serverId}</h2>
                 <span id="status-${serverId}" class="text-warning">Connecting...</span>
-                <div class="d-flex flex-column flex-md-row gap-4 py-md-3 align-items-center justify-content-center">
-                    <div class="list-group list-group-radio d-grid gap-2 border-0">
+                <div class="d-flex flex-row gap-5 py-md-3 align-items-center justify-content-center">
+                        <ul class="list-group list-group-horizontal list-group-radio list-unstyled gap-2 border-0">
                         <!-- Dynamically created radio buttons and labels -->
                         ${[1, 2, 3].map(num => `
-                            <div class="position-relative">
+                            <li class="position-relative">
                                 <input class="form-check-input position-absolute top-50 end-0 me-3 fs-5" 
                                        type="radio" name="listGroupRadioGrid${serverId}" 
                                        id="listGroupRadioGrid${num}_${serverId}" 
                                        onclick="getLog(${num}, '${serverId}')">
                                 <label class="list-group-item rounded-3" 
                                        for="listGroupRadioGrid${num}_${serverId}">
-                                    <strong class="fw-semibold">${num === 1 ? 'Server Logs' : num === 2 ? 'Heartbeat Log' : 'Output Log'}</strong>
+                                    <strong class="fw-semibold pe-4">${num === 1 ? 'Server' : num === 2 ? 'Heartbeat' : 'Output'}</strong>
                                 </label>
-                            </div>
+                            </li>
                         `).join('')}
-                        <div data-bs-spy="scroll" data-bs-smooth-scroll="true" class="bg-body-tertiary p-3 rounded-2" tabindex="0">
-                        <pre class="text-start" id="server-log_${serverId}"></pre>
-                        </div>
+
+                    </ul>
+
+                </div>
+                <div class="d-flex flex-row align-items-center justify-content-center py-md-3">
+                    <div data-bs-spy="scroll" data-bs-smooth-scroll="true" style="height: 300px; overflow: auto;" 
+                         tabindex="0" class="bg-body-tertiary rounded-2 mt-3">
+                        <pre class="text-start mb-2 p-2" id="server-log_${serverId}"></pre>
                     </div>
                 </div>
                 <div class="d-flex justify-content-between align-items-center">

@@ -19,12 +19,12 @@ class ServerManager: # class that manages the different servers active in our sy
         if server_id not in self.servers:
             isPrimary = False
             filtered_channels = {k: v for k, v in self.channels.items() if k != server_id} # filter out itself from channels
-            if len(self.servers) == 0: 
+            if len(self.servers) == 0:
                 isPrimary = True # only make the very first server activated the primary server
                 server = RAFTServiceServicer(server_id, port, filtered_channels, isPrimary, server_id)
             else: # otherwise it's not a primary
                 server = RAFTServiceServicer(server_id, port, filtered_channels, isPrimary, self.get_Primary())
-            
+
             # add new server to list
             self.channels[server_id] = grpc.insecure_channel(f"localhost:{port}")
             thread = threading.Thread(target=server.serve, daemon=True)
@@ -32,7 +32,7 @@ class ServerManager: # class that manages the different servers active in our sy
             self.server_threads[server_id] = thread
             thread.start()
             print(f"{server_id} started on port {port}.")
-            
+
             # update other servers to tell them new one has joined
             for id in self.servers.keys():
                 if server_id != id: # dont add yourself to the list
@@ -59,11 +59,11 @@ class ServerManager: # class that manages the different servers active in our sy
 
         else:
             print(f"{server_id} is not running.")
-    
+
     def get_Primary(self):
         diff_leaders = defaultdict(int)  # dict to keep track of how many times each id is returned, taking majority as primary (in case different servers think different ones are the primary)
         for server_id in self.servers.keys():
-            leader = self.servers[server_id].getPrimary() 
+            leader = self.servers[server_id].getPrimary()
             diff_leaders[leader] += 1
 
         # get leader with the majority
@@ -112,7 +112,7 @@ def main():
                 manager.start_server(f'Server {id}', 50050+id)
             except:
                 print("> invalid server id. needs to be 'server' with a number indicator (e.g., 'server 1')")
-        
+
         if user_input.startswith("stop") or user_input.startswith("end"):
             try:
                 if (user_input.endswith("all")):
@@ -121,10 +121,10 @@ def main():
                     manager.stop_server(f'Server {int(user_input.split("erver")[1].strip())}')
             except:
                 print("> invalid id. needs to be 'server' with a number indicator (e.g., 'server 1') or 'all'")
-        
+
         if user_input.startswith("input"):
-            
-            if len(user_input.split()) >= 3: # make sure input is in right format 
+
+            if len(user_input.split()) >= 3: # make sure input is in right format
                 if len(manager.servers) > 0: # make sure we have active servers
                     leader = manager.get_Primary()
                     chan = 50050+int(leader.split("erver")[1].strip())
@@ -149,11 +149,11 @@ def main():
                 else:
                     print("> no servers active!")
             else:
-                print("> invalid input")  
-        
-        # ask again
+                print("> invalid input")
+
+                # ask again
         user_input = input("----------------------------------------------------------------------------------------------------\nwhat would you like to do? eg. 'start server1', etc. enter q to quit\n")
-    
+
     # user input q, just stop all servers and end program
     manager.stop_all_servers()
 
