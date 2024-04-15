@@ -95,6 +95,8 @@ def main():
     delete_files('heartbeat_*.txt')
     delete_files('log_*.txt')
     delete_files('output_*.txt')
+    delete_files('write_*.txt')
+    delete_files('client*.txt')
     print(f"deleted old files")
 
     manager = ServerManager()
@@ -122,7 +124,7 @@ def main():
         
         if user_input.startswith("input"):
             
-            if len(user_input.split(" ")) >= 3: # make sure input is in right format 
+            if len(user_input.split()) >= 3: # make sure input is in right format 
                 if len(manager.servers) > 0: # make sure we have active servers
                     leader = manager.get_Primary()
                     chan = 50050+int(leader.split("erver")[1].strip())
@@ -134,9 +136,9 @@ def main():
                     try:
                         print(f"the primary is {leader}")
                         with grpc.insecure_channel(f'localhost:{chan}') as channel:
-                            inputs = user_input.split(" ")
+                            inputs = user_input.split()
                             stub = raft_pb2_grpc.RAFTServiceStub(channel)
-                            response = stub.Write(raft_pb2.WriteRequest(key=inputs[1], value=inputs[2]))
+                            response = stub.Write(raft_pb2.WriteRequest(key=inputs[1].strip(), value=inputs[2].strip()))
                             print(response.ack)
 
                             # update log
