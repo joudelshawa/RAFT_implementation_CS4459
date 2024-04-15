@@ -118,14 +118,14 @@ class RAFTServiceServicer(raft_pb2_grpc.RAFTServiceServicer):
                             # send the appendentries request again for the new data
                             response = stub.AppendEntries(raft_pb2.AppendEntriesRequest(term=self.term, leaderId=self.id, prevLogIndex=self.lastIndex, prevLogTerm = self.lastIndexTerm, leaderCommit=(self.lastIndex+1), keyInput = request.key, valueInput = request.value))
                             if response.success: success.append(1)
-                            else: self.output("didnt append new stuff :/")
+                            else: self.output("something went wrong while appending after reconciliation.")
                         except Exception as e:
                             self.output(f"Failed to send reconcilelogs to {name}.")
                 except Exception as e:
                     self.output(f"Failed to send appendentries to {name}.")
 
         self.output(f"sum: {sum(success)}")
-        if sum(success) > (len(self.channels)+1)/2: # if more than majority confirmed appendentries, actually append it
+        if sum(success)+1 > (len(self.channels)+1)/2: # if more than majority confirmed appendentries, actually append it
             # update write stuff
             key = request.key
             value = request.value
@@ -148,7 +148,7 @@ class RAFTServiceServicer(raft_pb2_grpc.RAFTServiceServicer):
             return raft_pb2.WriteResponse(ack="done")
         else:
             # return error for client
-            return raft_pb2.WriteResponse(ack="something went wrong!!?!?!") #TODO or maybe set to an error code
+            return raft_pb2.WriteResponse(ack="something went wrong. not enough servers confirmed.") 
 
     # function to append entries - called by primary
     def AppendEntries(self, request, context):
@@ -183,7 +183,7 @@ class RAFTServiceServicer(raft_pb2_grpc.RAFTServiceServicer):
             with open(self.log_file_path, 'a') as file: # 'a' so we can append if it already exists
                 file.write(f"index {leaderIndex} : term {term}\n") # layout is index:term
             
-            self.output(f"adding new log, not primary!")
+            self.output(f"adding new log")
             # update other stuff
             self.lastIndex = leaderIndex
             self.lastIndexTerm = term
@@ -197,7 +197,7 @@ class RAFTServiceServicer(raft_pb2_grpc.RAFTServiceServicer):
             return raft_pb2.AppendEntriesResponse(term = self.term, success = True)
 
         else: # if mismatch in logs, not successful
-            self.output("idk theres a mismatch! need to reconcile")
+            self.output("there's a mismatch! need to reconcile")
             return raft_pb2.AppendEntriesResponse(term = self.term, success = False)
         
     # function to reconcile logs - called by primary
@@ -246,6 +246,8 @@ class RAFTServiceServicer(raft_pb2_grpc.RAFTServiceServicer):
                     self.term = request.term
                     self.leaderId = request.leaderId
                     self.isPrimary = False
+
+                self.output("reconciled logs!")
                 
                 return raft_pb2.ReconcileResponse(success = True)
 
@@ -261,7 +263,6 @@ class RAFTServiceServicer(raft_pb2_grpc.RAFTServiceServicer):
             return
         id = request.service_identifier
         self.last_heartbeat[id] = time.time() # log timestamp of heartbeat for the id received
-        # self.output(f"got heartbeat from {id}") # TODO remove
         if id == self.leaderId:
             with open(self.heartbeat_file_path, "a") as file: # update that alive in logs only when we get a heartbeat
                 file.write(f"{id} is alive. Latest heartbeat received at {time.ctime(self.last_heartbeat[id])}\n")
@@ -279,7 +280,6 @@ class RAFTServiceServicer(raft_pb2_grpc.RAFTServiceServicer):
                 try:
                     # send the heartbeat
                     stub.Heartbeat(raft_pb2.HeartbeatRequest(service_identifier=self.id))
-                    # self.output(f"Sent heartbeat to {name}.") # TODO remove
                 except:
                     self.output(f"Failed to send heartbeat to {name}.")
 
@@ -389,11 +389,6 @@ class RAFTServiceServicer(raft_pb2_grpc.RAFTServiceServicer):
                     self.voted = True
                     self.voted_for = candidateId
                     self.output(f"voted for {candidateId}")
-                    return raft_pb2.VoteResponse(term = self.term, voteGiven = True)
-                elif self.voted and self.voted_for == self.id: # if their term is >= and i voted for myself, change vote to them
-                    self.voted = True
-                    self.voted_for = candidateId
-                    self.output(f"voted for me but changing to {candidateId}")
                     return raft_pb2.VoteResponse(term = self.term, voteGiven = True)
                 else: # if we already voted we cant give our vote to this candidate
                     self.output(f"already voted for {self.voted_for} so cant vote for {candidateId}")
