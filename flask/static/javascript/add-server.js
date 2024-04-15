@@ -39,8 +39,9 @@ function addServer() {
     const serverHTML = `
     <div class="col" id="server-${serverId}">
         <div class="card shadow-sm">
-            <div class="card-body">
+            <div class="card-body text-center">
                 <h2 class="text-center">Server ${serverId}</h2>
+                <span id="status-${serverId}" class="text-warning">Connecting...</span>
                 <div class="d-flex flex-column flex-md-row gap-4 py-md-3 align-items-center justify-content-center">
                     <div class="list-group list-group-radio d-grid gap-2 border-0">
                         <!-- Dynamically created radio buttons and labels -->
@@ -49,15 +50,16 @@ function addServer() {
                                 <input class="form-check-input position-absolute top-50 end-0 me-3 fs-5" 
                                        type="radio" name="listGroupRadioGrid${serverId}" 
                                        id="listGroupRadioGrid${num}_${serverId}" 
-                                       onclick="toggleRadio(this, '${serverId}')">
+                                       onclick="getLog(${num}, '${serverId}')">
                                 <label class="list-group-item rounded-3" 
                                        for="listGroupRadioGrid${num}_${serverId}">
                                     <strong class="fw-semibold">${num === 1 ? 'Server Logs' : num === 2 ? 'Heartbeat Log' : 'Output Log'}</strong>
                                 </label>
                             </div>
                         `).join('')}
-                        <label for="server-log_${serverId}"></label>
-                        <textarea class="form-control" id="server-log_${serverId}" rows="10"></textarea>
+                        <div data-bs-spy="scroll" data-bs-smooth-scroll="true" class="bg-body-tertiary p-3 rounded-2" tabindex="0">
+                        <pre class="text-start" id="server-log_${serverId}"></pre>
+                        </div>
                     </div>
                 </div>
                 <div class="d-flex justify-content-between align-items-center">
@@ -82,6 +84,34 @@ function addServer() {
     axios.post('/start-server', {server_id: serverId})
         .then(response => console.log('Server started:', response.data.message))
         .catch(error => console.error('Error starting server:', error));
+
+    setInterval(() => checkServerStatus(serverId), 3000)
+}
+
+function checkServerStatus(serverId) {
+    axios.post('/check-logs', {server_id: serverId})
+        .then(response => {
+            document.getElementById(`status-${serverId}`).textContent = response.data.status;
+            document.getElementById(`status-${serverId}`).className = response.data.status === 'Connected' ? 'text-success' : 'text-danger';
+        })
+        .catch(error => {
+            console.error('Error checking logs:', error);
+            const statusElement = document.getElementById(`status-${serverId}`);
+            statusElement.textContent = 'Error';
+            statusElement.className = 'text-danger';
+        });
+}
+
+function getLog(num, serverId) {
+    // Determine the log type based on the radio number
+    const logType = num === 1 ? 'log' : num === 2 ? 'heartbeat' : 'output'
+
+    // Fetch the log content based on the server ID and log type
+    axios.post('/get-log', {server_id: serverId, log_type: logType})
+        .then(response => {
+            document.getElementById(`server-log_${serverId}`).textContent = response.data.content;
+        })
+        .catch(error => console.error('Error fetching log:', error));
 }
 
 function killServer(serverId) {
@@ -89,9 +119,4 @@ function killServer(serverId) {
     console.log('Kill server:', serverId);
     // Optionally remove the server div
     document.getElementById(`server-${serverId}`).remove();
-}
-
-function toggleRadio(radio, serverId) {
-    console.log('Radio toggled:', radio.id, 'for server ID:', serverId);
-    // Implement additional logic as needed
 }
