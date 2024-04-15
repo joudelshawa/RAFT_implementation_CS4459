@@ -1,0 +1,17 @@
+# IntelliJ project files
+.idea
+*.iml
+out
+gen
+
+# Environment
+.venv
+
+# Flask template
+instance/*
+!instance/.gitignore
+.webassets-cache
+.env
+
+# RAFT
+*.txt

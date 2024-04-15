@@ -1,0 +1,48 @@
+<!-- templates/navbar.html -->
+<header data-bs-theme="dark">
+    <div class="collapse text-bg-dark" id="navbarHeader">
+        <div class="container align-items-center">
+            <div class="row justify-content-center">
+                <div class="col-sm-8 col-md-7 py-4">
+                    <h4>About</h4>
+                    <p class="text-body-secondary">This application implements an election algorithm based on RAFT for a
+                        primary backup system. The winner of a given election will become the new primary for the backup
+                        system, notifying the client and the other backups of its new role as primary. This was
+                        developed as a final project for Computer Science 4459 at the University of Western
+                        Ontario. </p>
+                    <a href="https://github.com/joudelshawa/RAFT_implementation_CS4459" target="_blank"
+                       class="text-white">GitHub</a>
+                </div>
+                <div class="col-sm-4 col-md-2 offset-md-1 py-4 px-8 d-flex justify-content-end">
+                    <div>
+                        <h4>Team</h4>
+                        <ul class="list-unstyled text-body-secondary">
+                            <li><h6>Samuel Catania</h6></li>
+                            <li><h6>Joud El-Shawa</h6></li>
+                            <li><h6>Ian Prentice</h6></li>
+                            <li><h6>Meg Zhang</h6></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="navbar navbar-dark bg-dark shadow-sm">
+        <div class="container">
+            <div class="ml-auto d-flex align-items-center">
+                <div class="form-check form-switch m-2">
+                    <input class="form-check-input" type="checkbox" role="switch" id="toggleServer">
+                    <span class="slider round"></span>
+                    <label class="form-check-label" for="toggleServer"></label>
+                </div>
+                <span id="server-status" class="text-danger">Manager Process Is Not Running</span>
+            </div>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarHeader"
+                    aria-controls="navbarHeader" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+        </div>
+    </div>
+</header>
+
+
