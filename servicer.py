@@ -12,13 +12,13 @@ import random
 
 class RAFTServiceServicer(raft_pb2_grpc.RAFTServiceServicer):
     
+    # SETUP
+
     def __init__(self, id, channel, list_of_servers, isPrimary, leader): # so it can work in the background and the backup can still receive requests from clients (primary)
         self.id = id
         self.channel = channel 
         self.server = None
-        
         self.channels = list_of_servers
-        
         
         self.redis = redis.Redis(host='localhost', port=6379, decode_responses=True)
         self.hash_key = f'info_{self.id}'
@@ -28,15 +28,19 @@ class RAFTServiceServicer(raft_pb2_grpc.RAFTServiceServicer):
         self.write_file_path = f"./write_{id}.txt"
         self.heartbeat_file_path = f"./heartbeat_{id}.txt"
         self.output_file_path = f"./output_{id}.txt"
-
-        self.output(f"existing channels are {self.channels}")
         
         self.leaderId = leader
         self.output(f"leader is {self.leaderId}")
         self.output(f"{id} primary {isPrimary}")
-        self.isPrimary = isPrimary
-        self.isCandidate = False
+        self.isPrimary = isPrimary # to indicate if server is the primary server
+        self.isCandidate = False # to indicate if server is currently performing an election
         self.voted = False # to indicate if already voted during elections
+        self.voted_for = "" # to indicate which server they voted for in case of split-brain elections 
+
+        # timestamps to control for multiple elections going off at the same time
+        # helps us manage back-to-back elections (not the same as the timeout - check report for more details!)
+        self.primary_down_timestamp = 0
+        self.primary_announcement_timestamp = 0
 
         # for appending entries and reconciling with primary
         self.lastIndex = -1
@@ -62,12 +66,7 @@ class RAFTServiceServicer(raft_pb2_grpc.RAFTServiceServicer):
         self.check_heartbeat_thread.start()  
 
         # init log 
-        # TODO remove extra shit
-        # message = 
-        # if os.path.exists(self.log_file_path) and os.path.getsize(self.log_file_path) > 0: # if already exists add new line before saying server on
-        #         message = "\n" + message            
-        
-        with open(self.log_file_path, 'a') as file: # 'a' so we can append if it already exists
+        with open(self.log_file_path, 'w') as file: # 'w' so we can overwrite if it already exists (already lost that data)
             file.write(f"{self.id} online. format is 'index:term#'\n")
 
     # function to log what would have been in the terminal output
@@ -91,7 +90,6 @@ class RAFTServiceServicer(raft_pb2_grpc.RAFTServiceServicer):
         self.channels.pop(id, None)
         
 
-
     # GRPC functions
 
     # function to write - ONLY called if primary
@@ -106,13 +104,11 @@ class RAFTServiceServicer(raft_pb2_grpc.RAFTServiceServicer):
             
             self.output(f"primary is sending append entries request! to {self.channels.keys()}")
             for name, channel in list(self.channels.items()): # connect to other servers
-                
+                # create stub with current channel so we can send appendentry rpc to server
                 stub = raft_pb2_grpc.RAFTServiceStub(channel)
                 try:
-                    # stub.TMP(raft_pb2.TMPRequest(message="hey this is a test!"))
-                    # self.output("sent tmp mssg")
                     # send the appendentries request
-                    response = stub.AppendEntries(raft_pb2.AppendEntriesRequest(term=self.term, leaderId=self.id, prevLogIndex=self.lastIndex, prevLogTerm = self.lastIndexTerm, leaderCommit=self.lastIndex+1))
+                    response = stub.AppendEntries(raft_pb2.AppendEntriesRequest(term=self.term, leaderId=self.id, prevLogIndex=self.lastIndex, prevLogTerm = self.lastIndexTerm, leaderCommit=self.lastIndex+1, keyInput = request.key, valueInput = request.value))
                     if response.success: success.append(1)
                     else: # if its not successful, we need to reconcile entries
                         # try reconcile logs req
@@ -120,14 +116,12 @@ class RAFTServiceServicer(raft_pb2_grpc.RAFTServiceServicer):
                             response = stub.ReconcileLogs(raft_pb2.ReconcileRequest(term=self.term, leaderId=self.id, prevLogIndex=self.lastIndex, prevLogTerm = self.lastIndexTerm, filepath=self.log_file_path))
                             if response.success: self.output(f"reconciled entries for {name}!")
                             # send the appendentries request again for the new data
-                            response = stub.AppendEntries(raft_pb2.AppendEntriesRequest(term=self.term, leaderId=self.id, prevLogIndex=self.lastIndex, prevLogTerm = self.lastIndexTerm, leaderCommit=(self.lastIndex+1)))
+                            response = stub.AppendEntries(raft_pb2.AppendEntriesRequest(term=self.term, leaderId=self.id, prevLogIndex=self.lastIndex, prevLogTerm = self.lastIndexTerm, leaderCommit=(self.lastIndex+1), keyInput = request.key, valueInput = request.value))
                             if response.success: success.append(1)
                             else: self.output("didnt append new stuff :/")
                         except Exception as e:
                             self.output(f"Failed to send reconcilelogs to {name}.")
                 except Exception as e:
-                #     self.output(f"RPC failed for {name}: {str(e)}")
-                # except:
                     self.output(f"Failed to send appendentries to {name}.")
 
         self.output(f"sum: {sum(success)}")
@@ -136,7 +130,7 @@ class RAFTServiceServicer(raft_pb2_grpc.RAFTServiceServicer):
             key = request.key
             value = request.value
 
-            # write in backup database
+            # write in primary database
             self.redis.hset(self.hash_key, key, value)
 
             # update write log
@@ -155,11 +149,6 @@ class RAFTServiceServicer(raft_pb2_grpc.RAFTServiceServicer):
         else:
             # return error for client
             return raft_pb2.WriteResponse(ack="something went wrong!!?!?!") #TODO or maybe set to an error code
-    
-    # # TODO delete later - need to check if problem with connection or way we're sending requests
-    # def TMP(self, request, context):
-    #     self.output(f"received {request.message}")
-    #     return empty_pb2.Empty()
 
     # function to append entries - called by primary
     def AppendEntries(self, request, context):
@@ -179,6 +168,8 @@ class RAFTServiceServicer(raft_pb2_grpc.RAFTServiceServicer):
         # check if this is just an empty appendentries request to announce new leader
         if leaderIndex == -1:
             self.output(f"received blank appendentries request for new leader {leaderId}")
+            # log when you received primary announcement so we dont have back to back elections
+            self.primary_announcement_timestamp = time.time()
             # update stuff to indicate new primary - dont change the last log index and term bc may need reconciling
             self.term = term
             self.leaderId = leaderId
@@ -198,9 +189,11 @@ class RAFTServiceServicer(raft_pb2_grpc.RAFTServiceServicer):
             self.lastIndexTerm = term
             self.term = term
             self.leaderId = leaderId
-            # self.isPrimary = False
+            self.isPrimary = False
 
-            self.output("returning success response")
+            # write in database
+            self.redis.hset(self.hash_key, request.keyInput, request.valueInput)
+
             return raft_pb2.AppendEntriesResponse(term = self.term, success = True)
 
         else: # if mismatch in logs, not successful
@@ -220,27 +213,32 @@ class RAFTServiceServicer(raft_pb2_grpc.RAFTServiceServicer):
                     follower_lines = file2.readlines()
 
                     changed = False # bool to track if we need to change follower file
-                    
-                    # skip the first line and have the same number of logs in both files
-                    for i in range(1, len(leader_lines)):
-                        if i < len(follower_lines):
-                            if leader_lines[i] != follower_lines[i]: # if lines are not the same
-                                self.output(f"Correcting difference:\nOriginal in follower: {follower_lines[i]}New in follower: {leader_lines[i]}")
-                                follower_lines[i] = leader_lines[i]  # sync up lines from leader file
-                                changed = True
-                        else:
-                            # leader has more logs than follower, append these lines to follower
-                            self.output(f"Appending missing line from leader to follower: {leader_lines[i]}")
-                            follower_lines.append(leader_lines[i])
-                            changed = True
-                    
-                    self.output(f"new follower lines: ***********\n{follower_lines}")
-                    self.output("***********")
 
-                # write the updated lines back to follower - TODO note that you still need to call the appendentries function again for any uncommitted data!!
-                if changed:
-                    with open(self.log_file_path, 'w') as file2:
-                        file2.writelines(follower_lines)
+                    # reverse lists to start comparison from end of log
+                    reversed1 = follower_lines[::-1]
+                    reversed2 = leader_lines[::-1]
+                    
+                    # find first index where lines match so we can copy all logs after 
+                    match_index = None
+                    for i, (line1, line2) in enumerate(zip(reversed1, reversed2)):
+                        if line1 == line2:
+                            match_index = i
+                        else:
+                            break
+                    
+                    # find point to start appending from and up to
+                    if match_index is not None:
+                        # -1 because match_index is from the end
+                        append_from = len(leader_lines) - match_index - 1
+                    else:
+                        append_from = 1  # no matches, copy all from leader besides online message
+
+                    # write updated logs to secondary
+                    with open(self.log_file_path, 'w') as file:
+                        if follower_lines:
+                            file.write(follower_lines[0])  # write the first line of secondary (online message)
+                            if append_from < len(leader_lines):
+                                file.writelines(leader_lines[append_from:])
 
                     # update the servers last logs so we can append entries
                     self.lastIndex = request.prevLogIndex
@@ -263,7 +261,7 @@ class RAFTServiceServicer(raft_pb2_grpc.RAFTServiceServicer):
             return
         id = request.service_identifier
         self.last_heartbeat[id] = time.time() # log timestamp of heartbeat for the id received
-        self.output(f"got heartbeat from {id}")
+        # self.output(f"got heartbeat from {id}") # TODO remove
         if id == self.leaderId:
             with open(self.heartbeat_file_path, "a") as file: # update that alive in logs only when we get a heartbeat
                 file.write(f"{id} is alive. Latest heartbeat received at {time.ctime(self.last_heartbeat[id])}\n")
@@ -281,7 +279,7 @@ class RAFTServiceServicer(raft_pb2_grpc.RAFTServiceServicer):
                 try:
                     # send the heartbeat
                     stub.Heartbeat(raft_pb2.HeartbeatRequest(service_identifier=self.id))
-                    self.output(f"Sent heartbeat to {name}.")
+                    # self.output(f"Sent heartbeat to {name}.") # TODO remove
                 except:
                     self.output(f"Failed to send heartbeat to {name}.")
 
@@ -298,6 +296,8 @@ class RAFTServiceServicer(raft_pb2_grpc.RAFTServiceServicer):
                     break # leave loop
 
                 if current_time - last_time > self.heartbeat_timer+3 and id == self.leaderId: # if has been 3s past expected heartbeat reception, it might be down
+                    # log when we noticed the primary was down so we dont have multiple elections
+                    self.primary_down_timestamp = time.time()
 
                     # if more than 5 sec passed, log that the server might be down
                     with open(self.heartbeat_file_path, "a") as file:
@@ -315,18 +315,23 @@ class RAFTServiceServicer(raft_pb2_grpc.RAFTServiceServicer):
     # function to start election once timer is up
     def start_election_timer(self):
         self.electionTimeout = random.uniform(150, 300)  # random timeout based on slides
-        # reset the election timer to a random timeout
         self.timer = threading.Timer(self.electionTimeout / 1000.0, self.become_candidate) # after timer is up, become a candidate
         self.timer.start()
 
-    # function to become a candidate and start requesting votes from other servers
+    # function to become a candidate and start requesting votes from other servers - activated after the randomized timeout
     def become_candidate(self):
-        if not self.shutdown_event.is_set():
+
+        # if there has not been a shutdown process activated and it has not voted during the timeout time 
+        # and its been more than 5 seconds between when we noticed the primary was down and when we got a new primary announcement
+        # note that this prevents back to back elections!
+        
+        if not self.shutdown_event.is_set() and not self.voted and self.primary_down_timestamp - self.primary_announcement_timestamp > 5: 
             self.output("starting election!")
             self.isCandidate = True # set self as candidate
             self.term += 1 # increase term
             self.voted = True # set to true so you cant vote for anyone else
             votes = [1] # vote for self
+            self.voted = self.id
 
             for name, channel in list(self.channels.items()): # connect to other servers
                 stub = raft_pb2_grpc.RAFTServiceStub(channel)
@@ -341,7 +346,7 @@ class RAFTServiceServicer(raft_pb2_grpc.RAFTServiceServicer):
                     self.output(f"Failed to send requestvote to {name}.")
 
             if sum(votes) > (len(self.channels)+1)/2 and self.isCandidate: # if we got majority vote and we're still a candidate
-                self.output("won election! updating info and sending appendentries rpcs")
+                self.output(f"won election with {sum(votes)} votes! updating info and sending appendentries rpcs")
                 self.leaderId = self.id
                 self.isPrimary = True
                 self.isCandidate = False
@@ -355,26 +360,44 @@ class RAFTServiceServicer(raft_pb2_grpc.RAFTServiceServicer):
                         response = stub.AppendEntries(raft_pb2.AppendEntriesRequest(term=self.term, leaderId=self.id, prevLogIndex=self.lastIndex, prevLogTerm = self.lastIndexTerm, leaderCommit=-1)) # setting to -1 to indicate not an actual log entry
                     except Exception as e:
                         self.output(f"Failed to send post-vote appendentries to {name}.")
+            else:
+                self.output("did not win election")
+                self.isPrimary = False
+                self.isCandidate = False
+                self.voted = False 
+                self.voted_for = ""
 
+    # GRPC function to request votes from other servers. This function implements when the server receives a vote request containing the candidates term, id, and last log term + index
+    # and returns a response to the requester based on some criteria
     def RequestVote(self, request, context):
         if not self.shutdown_event.is_set():
             self.output(f"vote was requested from {request.id}")
             candidateTerm = request.term
-            candidateId = request.id # TODO: dont need???
+            candidateId = request.id 
             candidateLastLogIndex = request.lastLogIndex
             candidateLastLogTerm = request.lastLogTerm
 
-            if not self.voted: # if we havent already voted for a candidate
-                if self.term > candidateTerm or self.lastIndexTerm > candidateLastLogTerm or (self.lastIndexTerm == candidateLastLogTerm and self.lastIndex > candidateLastLogIndex):
-                    self.output(f"did not vote for {candidateId}")
-                    return raft_pb2.VoteResponse(term = self.term, voteGiven = False) # cant vote for them, their info is stale
-                else: # can vote for them
+            # vote based on vote status and candidate info
+            if self.term > candidateTerm or self.lastIndexTerm > candidateLastLogTerm or (self.lastIndexTerm == candidateLastLogTerm and self.lastIndex > candidateLastLogIndex):
+                self.output(f"did not vote for {candidateId}")
+                return raft_pb2.VoteResponse(term = self.term, voteGiven = False) # cant vote for them, their info is stale
+            elif time.time() - self.primary_announcement_timestamp < 2: # if JUST appointed new primary, dont vote
+                self.output(f"recently appointed primary so did not vote for {candidateId}")
+                return raft_pb2.VoteResponse(term = self.term, voteGiven = False)
+            else: # can vote for them
+                if not self.voted: # if we havent already voted for a candidate
                     self.voted = True
+                    self.voted_for = candidateId
                     self.output(f"voted for {candidateId}")
                     return raft_pb2.VoteResponse(term = self.term, voteGiven = True)
-            else: # if we already voted we cant give our vote to this candidate
-                self.output(f"already voted so cant vote for {candidateId}")
-                return raft_pb2.VoteResponse(term = self.term, voteGiven = False)
+                elif self.voted and self.voted_for == self.id: # if their term is >= and i voted for myself, change vote to them
+                    self.voted = True
+                    self.voted_for = candidateId
+                    self.output(f"voted for me but changing to {candidateId}")
+                    return raft_pb2.VoteResponse(term = self.term, voteGiven = True)
+                else: # if we already voted we cant give our vote to this candidate
+                    self.output(f"already voted for {self.voted_for} so cant vote for {candidateId}")
+                    return raft_pb2.VoteResponse(term = self.term, voteGiven = False)
             
     # function to start the server
     def serve(self):
@@ -395,11 +418,12 @@ class RAFTServiceServicer(raft_pb2_grpc.RAFTServiceServicer):
                 self.shutdown_event.set() # signal all threads to stop
                 self.server.stop(0)  # stop the server - allow active rpcs to finish (probably heartbeat for loops)
                 
-                self.server.wait_for_termination()  # Wait until the server has fully terminated
+                self.server.wait_for_termination()  # wait server fully terminates
                 
                 # wait for all threads to finish
                 self.send_heartbeat_thread.join()
                 self.check_heartbeat_thread.join()
+
             except:
-                print("something went wrong while shutting down?")
+                print("something went wrong while shutting down")
 

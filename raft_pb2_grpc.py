@@ -7,7 +7,9 @@ import raft_pb2 as raft__pb2
 
 
 class RAFTServiceStub(object):
-    """Missing associated documentation comment in .proto file."""
+    """service definitions
+
+    """
 
     def __init__(self, channel):
         """Constructor.
@@ -40,15 +42,12 @@ class RAFTServiceStub(object):
                 request_serializer=raft__pb2.WriteRequest.SerializeToString,
                 response_deserializer=raft__pb2.WriteResponse.FromString,
                 )
-        self.TMP = channel.unary_unary(
-                '/raft.RAFTService/TMP',
-                request_serializer=raft__pb2.TMPRequest.SerializeToString,
-                response_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
-                )
 
 
 class RAFTServiceServicer(object):
-    """Missing associated documentation comment in .proto file."""
+    """service definitions
+
+    """
 
     def RequestVote(self, request, context):
         """Missing associated documentation comment in .proto file."""
@@ -75,12 +74,6 @@ class RAFTServiceServicer(object):
         raise NotImplementedError('Method not implemented!')
 
     def Write(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def TMP(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -114,11 +107,6 @@ def add_RAFTServiceServicer_to_server(servicer, server):
                     request_deserializer=raft__pb2.WriteRequest.FromString,
                     response_serializer=raft__pb2.WriteResponse.SerializeToString,
             ),
-            'TMP': grpc.unary_unary_rpc_method_handler(
-                    servicer.TMP,
-                    request_deserializer=raft__pb2.TMPRequest.FromString,
-                    response_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
-            ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
             'raft.RAFTService', rpc_method_handlers)
@@ -127,7 +115,9 @@ def add_RAFTServiceServicer_to_server(servicer, server):
 
  # This class is part of an EXPERIMENTAL API.
 class RAFTService(object):
-    """Missing associated documentation comment in .proto file."""
+    """service definitions
+
+    """
 
     @staticmethod
     def RequestVote(request,
@@ -211,22 +201,5 @@ class RAFTService(object):
         return grpc.experimental.unary_unary(request, target, '/raft.RAFTService/Write',
             raft__pb2.WriteRequest.SerializeToString,
             raft__pb2.WriteResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
-    def TMP(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/raft.RAFTService/TMP',
-            raft__pb2.TMPRequest.SerializeToString,
-            google_dot_protobuf_dot_empty__pb2.Empty.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

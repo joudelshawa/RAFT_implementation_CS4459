@@ -4,14 +4,9 @@ import "google/protobuf/empty.proto";
 
 package raft;
 
-// service definition for RAFT protocol
+// definitions for RAFT protocol and requests and responses needed 
 
-message VoteRequest {
-    int32 term = 1; // candidate's term
-    string id = 2; // candidate's id
-    int32 lastLogIndex = 3; // last log index of candidate to check if logs are up to date
-    int32 lastLogTerm = 4; // last log term of candidate to check if logs are up to date
-}
+// message definitions for appending entries
 
 message AppendEntriesRequest {
     int32 term = 1; // leader’s term
@@ -19,7 +14,16 @@ message AppendEntriesRequest {
     int32 prevLogIndex = 3; // index of log entry before new one to check if valid
     int32 prevLogTerm = 4; // term of previous log entry
     int32 leaderCommit = 5; // leader’s commitIndex 
+    string keyInput = 6;
+    string valueInput = 7;
 }
+
+message AppendEntriesResponse {
+    int32 term = 1;
+    bool success = 2; // true if follower contained entry matching prevLogIndex and prevLogTerm and thus appended the entry
+}
+
+// message definitions for reconciling entries
 
 message ReconcileRequest {
     int32 term = 1; // leader’s term
@@ -33,32 +37,21 @@ message ReconcileResponse {
     bool success = 1; // true if follower synced files
 }
 
+// message definitions for voting
+
+message VoteRequest {
+    int32 term = 1; // candidate's term
+    string id = 2; // candidate's id
+    int32 lastLogIndex = 3; // last log index of candidate to check if logs are up to date
+    int32 lastLogTerm = 4; // last log term of candidate to check if logs are up to date
+}
+
 message VoteResponse {
     int32 term = 1; // so candidate can check if their term is stale
     bool voteGiven = 2; // true if follower contained entry matching prevLogIndex and prevLogTerm
 }
 
-message AppendEntriesResponse {
-    int32 term = 1;
-    bool success = 2; // true if follower contained entry matching prevLogIndex and prevLogTerm
-}
-
-service RAFTService {
-    rpc RequestVote(VoteRequest) returns (VoteResponse);
-    rpc AppendEntries(AppendEntriesRequest) returns (AppendEntriesResponse);
-    rpc ReconcileLogs(ReconcileRequest) returns (ReconcileResponse);
-    rpc Heartbeat(HeartbeatRequest) returns (google.protobuf.Empty);
-    rpc Write (WriteRequest) returns (WriteResponse);
-    rpc TMP(TMPRequest) returns (google.protobuf.Empty);
-}
-  
-// service definition for writing in general (from asn 2)
-
-
-message TMPRequest {
-    string message = 1;
-}
-
+// message definitions for writing (client-side)
 
 message WriteRequest {
     string key = 1;
@@ -69,21 +62,18 @@ message WriteResponse {
     string ack = 1;
 }
 
-// service Sequence {
-//     rpc Write (WriteRequest) returns (WriteResponse);
-// }
-
-// service definition for sending heartbeats (from asn 2)
+// message defintion for heartbeats
 
 message HeartbeatRequest {
-    string service_identifier = 1;
+    string service_identifier = 1; // just need the id of the server who sent it
 }
 
-message HeartbeatResponse {
-    string message = 1;
-}
+// service definitions
 
-// service ViewService {
-    
-// }
-  
+service RAFTService {
+    rpc RequestVote(VoteRequest) returns (VoteResponse);
+    rpc AppendEntries(AppendEntriesRequest) returns (AppendEntriesResponse);
+    rpc ReconcileLogs(ReconcileRequest) returns (ReconcileResponse);
+    rpc Heartbeat(HeartbeatRequest) returns (google.protobuf.Empty);
+    rpc Write (WriteRequest) returns (WriteResponse);
+}
