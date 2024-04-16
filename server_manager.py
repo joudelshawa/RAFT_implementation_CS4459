@@ -8,6 +8,18 @@ import raft_pb2
 import raft_pb2_grpc
 import os
 import glob
+import subprocess
+
+
+def free_port(port_number):
+    try:
+        result = subprocess.run(['freeport', str(port_number)], capture_output=True, text=True)
+        if result.returncode == 0:
+            print(result.stdout)
+        else:
+            print(result.stderr)
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
 
 class ServerManager:  # class that manages the different servers active in our system - ASSUMING DOES NOT CRASH EVER
@@ -168,4 +180,8 @@ def main():
 
 
 if __name__ == '__main__':
+
+    free_port(50052)
+    free_port(50051)
+    free_port(50052)
     main()
