@@ -47,7 +47,7 @@ function addServer() {
                                        onclick="getLog(${num}, '${serverId}')">
                                 <label class="list-group-item rounded-3" 
                                        for="listGroupRadioGrid${num}_${serverId}">
-                                    <strong class="fw-semibold pe-4">${num === 1 ? 'Server' : num === 2 ? 'Heartbeat' : 'Output'}</strong>
+                                    <strong class="fw-semibold pe-4">${num === 1 ? 'Log' : num === 2 ? 'Heartbeat' : 'Output'}</strong>
                                 </label>
                             </li>
                         `).join('')}
@@ -90,7 +90,7 @@ function checkServerStatus(serverId) {
     axios.post('/check-logs', {server_id: serverId})
         .then(response => {
             document.getElementById(`status-${serverId}`).textContent = response.data.status;
-            document.getElementById(`status-${serverId}`).className = response.data.status === 'Connected' ? 'text-success' : 'text-danger';
+            document.getElementById(`status-${serverId}`).className = response.data.status === 'Connected' ? 'text-success' : 'text-warning';
         })
         .catch(error => {
             console.error('Error checking logs:', error);

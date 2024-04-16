@@ -41,6 +41,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     confirmToggleOff.addEventListener('click', function () {
+        console.log('Confirming toggle off');
         axios.post('/toggle-server-manager', {status: 'off'})
             .then(response => {
                 console.log(response.data.message);

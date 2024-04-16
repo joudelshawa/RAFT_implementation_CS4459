@@ -14,7 +14,6 @@ def home():
 
 
 def log_files_exist(server_id):
-    base_path = '../'
     # filenames = [f"log_Server {server_id}.txt", f"heartbeat_Server {server_id}.txt", f"output_Server {server_id}.txt"]
     filenames = [f"log_Server {server_id}.txt", f"output_Server {server_id}.txt"]
 
@@ -26,7 +25,7 @@ def check_logs():
     server_id = request.json['server_id']
     if log_files_exist(server_id):
         return jsonify({'status': 'Connected'})
-    return jsonify({'status': 'Error: Log files not found'})
+    return jsonify({'status': 'Log files not found'})
 
 
 @app.route('/get-log', methods=['POST'])

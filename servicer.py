@@ -427,7 +427,7 @@ class RAFTServiceServicer(raft_pb2_grpc.RAFTServiceServicer):
 
     # function to start the server
     def serve(self):
-        self.server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+        self.server = grpc.server(futures.ThreadPoolExecutor(max_workers=30))
         raft_pb2_grpc.add_RAFTServiceServicer_to_server(self, self.server)
         self.server.add_insecure_port(f'[::]:{self.channel}')
         self.server.start()
