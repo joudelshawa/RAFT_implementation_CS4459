@@ -50,28 +50,28 @@ def read_output(proc, out):
         proc.stdout.close()
 
 
-@app.route('/toggle-server-manager', methods=['POST'])
-def toggle_server():
-    global process, output
-    data = request.get_json()
-    if data['status'] == 'on':
-        if process is None:  # Start the process if not already started
-            process = subprocess.Popen(['python', '../server_manager.py'], stdin=subprocess.PIPE,
-                                       stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
-            output = []  # Reset output when starting a new process
-
-            # Create a thread to read the output of the process
-            threading.Thread(target=read_output, args=(process, output), daemon=True).start()
-        return jsonify({'message': 'Server Manager started'})
-    elif data['status'] == 'off':
-        if process:
-            process.stdin.write('q\n')
-            process.stdin.flush()
-            process.communicate()
-            process = None
-        return jsonify({'message': 'Server Manager stopped'})
-
-    return jsonify({'error': 'Invalid command'}), 400
+# @app.route('/toggle-server-manager', methods=['POST'])
+# def toggle_server():
+#     global process, output
+#     data = request.get_json()
+#     if data['status'] == 'on':
+#         if process is None:  # Start the process if not already started
+#             process = subprocess.Popen(['python', '../server_manager.py'], stdin=subprocess.PIPE,
+#                                        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
+#             output = []  # Reset output when starting a new process
+#
+#             # Create a thread to read the output of the process
+#             threading.Thread(target=read_output, args=(process, output), daemon=True).start()
+#         return jsonify({'message': 'Server Manager started'})
+#     elif data['status'] == 'off':
+#         if process:
+#             process.stdin.write('q\n')
+#             process.stdin.flush()
+#             process.communicate()
+#             process = None
+#         return jsonify({'message': 'Server Manager stopped'})
+#
+#     return jsonify({'error': 'Invalid command'}), 400
 
 
 @app.route('/get-output', methods=['GET'])
@@ -124,4 +124,10 @@ def get_primary():
 
 
 if __name__ == '__main__':
+    process = subprocess.Popen(['python', '../server_manager.py'], stdin=subprocess.PIPE,
+                               stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
+    output = []  # Reset output when starting a new process
+
+    # Create a thread to read the output of the process
+    threading.Thread(target=read_output, args=(process, output), daemon=True).start()
     app.run(debug=True)

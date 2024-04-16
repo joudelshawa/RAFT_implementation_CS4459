@@ -162,3 +162,11 @@ function killServer(serverId) {
         })
         .catch(error => console.error('Error stopping server:', error));
 }
+
+window.killAllServers = function () {
+    const serverCards = document.getElementsByClassName('server-instance');
+    for (let i = 0; i < serverCards.length; i++) {
+        const serverId = serverCards[i].getAttribute('data-server-id');
+        killServer(serverId);
+    }
+}
