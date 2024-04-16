@@ -307,7 +307,6 @@ class RAFTServiceServicer(raft_pb2_grpc.RAFTServiceServicer):
 
     # function to check heartbeats received in case primary is down
     def check_heartbeat(self):
-        self.output("checking heartbeats")
         while not self.shutdown_event.is_set():  # do constantly until shutdown
             current_time = time.time()
             for id, last_time in list(self.last_heartbeat.items()):

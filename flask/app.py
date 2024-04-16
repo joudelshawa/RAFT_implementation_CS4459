@@ -34,29 +34,12 @@ def get_log():
     server_id = request.json['server_id']
     log_type = request.json['log_type']  # "log", "heartbeat", or "output"
     filename = f"{log_type}_Server {server_id}.txt"
-    print(filename)
     try:
         with open(filename, 'r') as file:
-            print("hallo")
             content = file.read()
         return jsonify({'content': content})
     except FileNotFoundError:
         return jsonify({'error': 'File not found'}), 404
-
-
-@app.route('/start-server', methods=['POST'])
-def start_server():
-    global process
-    server_id = request.json.get('server_id')
-    if process and process.poll() is None:
-        try:
-            command = f'start server {server_id}'
-            process.stdin.write(command + '\n')
-            process.stdin.flush()
-            return jsonify({'message': f'Command "{command}" sent to server manager'}), 200
-        except Exception as e:
-            return jsonify({'error': str(e)}), 500
-    return jsonify({'error': 'Server manager is not running'}), 400
 
 
 def read_output(proc, out):
@@ -111,6 +94,34 @@ def send_command():
         return jsonify({'message': 'Command sent'})
     else:
         return jsonify({'error': 'Server not running'}), 400
+
+
+@app.route('/start-server', methods=['POST'])
+def start_server():
+    global process
+    server_id = request.json.get('server_id')
+    if process and process.poll() is None:
+        try:
+            command = f'start server {server_id}'
+            process.stdin.write(command + '\n')
+            process.stdin.flush()
+            return jsonify({'message': f'Command "{command}" sent to server manager'}), 200
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+    return jsonify({'error': 'Server manager is not running'}), 400
+
+
+@app.route('/get-primary', methods=['GET'])
+def get_primary():
+    global process
+    if process and process.poll() is None:
+        try:
+            process.stdin.write('get primary\n')
+            process.stdin.flush()
+            return jsonify({'message': 'Command sent'})
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+    return jsonify({'error': 'Server manager is not running'}), 400
 
 
 if __name__ == '__main__':

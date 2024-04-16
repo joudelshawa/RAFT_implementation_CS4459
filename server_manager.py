@@ -151,6 +151,9 @@ def main():
             else:
                 print("> invalid input")
 
+        if user_input == "get primary":
+            print(manager.get_Primary())
+
                 # ask again
         user_input = input("----------------------------------------------------------------------------------------------------\nwhat would you like to do? eg. 'start server1', etc. enter q to quit\n")
 
